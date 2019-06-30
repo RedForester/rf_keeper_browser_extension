@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "RedForester extension",
+  "description": "RedForester Extension",
+  "version": "0.0.1",
+
+  "permissions": ["activeTab", "http://app.redforester.com/*"],
+
+  "browser_action": {
+    "default_popup": "/src/popup.html"
+  },
+
+  "background": {
+    "scripts": ["/src/background.js"],
+    "persistent": false
+  }
+}
