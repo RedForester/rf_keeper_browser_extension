@@ -1,35 +1,34 @@
-const saveButton = document.getElementById('saveButton');
+const RF_URL = 'http://app.redforester.com';
 
-const MAP_ID = "0d2160f1-83b4-4afd-8887-ac18e520cc90";
-const PARENT_ID = "462d3e99-d8da-4af1-82e6-5a7ed7b18637";
-
-saveButton.onclick = async function () {
-    chrome.tabs.query({ currentWindow: true, active: true }, async function (tabs) {
-        const currentTab = tabs[0];
-        const header = currentTab.title || currentTab.url;
-        const description = prompt('Имя'); // todo proper gui
-
-        const response = await savePage(currentTab, MAP_ID, PARENT_ID, header, description);
-
-        alert(response.status) // todo notifications
-    });
+const state = {
+    where: null, // nodeId + mapId
+    name: '', // Имя страницы
+    description: '' // Описание страницы
 };
 
-async function savePage(currentTab, mapId, parentId, header, description) {
-    // todo escape title
-    const title = `[${header} - ${description}](${currentTab.url})`;
+/**
+ * Сохранение страницы в виде узла в RF
+ * @param url - Адрес страницы
+ * @param mapId - id карты, куда сохранять
+ * @param parentId - id узла, куда сохранять
+ * @param name - Имя страницы
+ * @param description - Описание страницы
+ * @returns {Promise<Response>}
+ */
+async function savePage(url, mapId, parentId, name, description) {
+    const linkName = description ? `${name} - ${description}`: name;
+    const title = `[${linkName}](${url})`;  // todo escape title
 
     const body = {
         position: ["P", -1],
         map_id: mapId,
         parent: parentId,
         properties: JSON.stringify({
-            global: { title: title }
+            global: {title}
         })
     };
 
-    // todo host config?
-    return fetch('http://app.redforester.com/api/nodes', {
+    return fetch(`${RF_URL}/api/nodes`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -38,3 +37,65 @@ async function savePage(currentTab, mapId, parentId, header, description) {
         body: JSON.stringify(body)
     });
 }
+
+// Действие при нажатии "сохранить"
+document
+    .getElementById('save-button')
+    .addEventListener('click', async function () {
+        if (state.where === null) return alert('Выберите узел');
+
+        chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
+            const currentTab = tabs[0];
+
+            const response = await savePage(
+                currentTab.url,
+                state.where.mapId,
+                state.where.nodeId,
+                state.name,
+                state.description
+            );
+
+            alert(response.status); // todo notifications
+            window.close();
+        });
+});
+
+
+
+// Инициализация popup
+(async function () {
+    // Получение имени страницы
+    chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+        const currentTab = tabs[0];
+
+        state.name = currentTab.title || currentTab.url;
+        document.getElementById('page-name').innerText = state.name
+
+    });
+
+    // Создание и заполнение выбиралки узлов
+    const favoriteNodesWrapper = document.getElementById('favorite-nodes');
+    const select = favoriteNodesWrapper.appendChild(document.createElement('select'));
+
+    const userInfo = await (await fetch(`${RF_URL}/api/user`)).json();
+    const favoriteNodeTag = userInfo.tags[0]; // fixme, rf
+    const favoriteNodes = await (await fetch(`${RF_URL}/api/tags/${favoriteNodeTag.id}`)).json();
+
+    for (let node of favoriteNodes) {
+        const option = select.appendChild(document.createElement('option'));
+        option.value = node.id;
+        option.innerText = node.title;
+    }
+
+    // Слежение за выбором узла
+    select.addEventListener('change', event => {
+        const nodeId = event.target.value;
+        const mapId = favoriteNodes.find(n => n.id === nodeId).map.id;
+        state.where = {nodeId, mapId};
+    });
+
+    // Слежение за описанием
+    document
+        .getElementById('page-description')
+        .addEventListener('change', event => state.description = event.target.value)
+})();
