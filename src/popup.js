@@ -31,6 +31,7 @@ async function savePage(url, mapId, parentId, name, description) {
         })
     };
 
+    // todo try catch, !ok
     const response = await fetch(`${RF_URL}/api/nodes`, {
         method: 'POST',
         headers: {
@@ -82,8 +83,18 @@ document
             state.description
         );
 
-        alert(response.status); // todo notifications
-        window.close();
+        const notifyOptions = {
+            type: 'basic',
+            title: 'RedForester',
+            message: 'Узел создан',
+            iconUrl: '/icons/icon_15.png'
+        };
+
+        if (!response.ok) {
+            notifyOptions.message = `Не получилось создать узел :(\n${response.status}`;
+        }
+
+        chrome.notifications.create('main', notifyOptions, () => window.close());
 });
 
 
