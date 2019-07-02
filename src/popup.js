@@ -1,6 +1,9 @@
+// todo отсутствие авторизации в rf
 const RF_URL = 'http://app.redforester.com';
+const SAVED_NODES_KEY = 'savedNodes';
 
 const state = {
+    url: null, // url текущей вкладки
     where: null, // nodeId + mapId
     name: '', // Имя страницы
     description: '' // Описание страницы
@@ -28,7 +31,7 @@ async function savePage(url, mapId, parentId, name, description) {
         })
     };
 
-    return fetch(`${RF_URL}/api/nodes`, {
+    const response = await fetch(`${RF_URL}/api/nodes`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -36,39 +39,74 @@ async function savePage(url, mapId, parentId, name, description) {
         },
         body: JSON.stringify(body)
     });
+    const newNodeInfo = await response.json();
+
+    chrome.storage.sync.get([SAVED_NODES_KEY], function (data) {
+        const savedNodes = data[SAVED_NODES_KEY] || [];
+        savedNodes.push({ id: newNodeInfo.id, url });
+        chrome.storage.sync.set({ [SAVED_NODES_KEY]: savedNodes })
+    });
+
+    return response
 }
+
+
+/**
+ * Проверка в каких узлах, сохранен текущий url
+ * @param url - Адрес страницы
+ * @returns {Promise<boolean|Array<string>>}
+ */
+async function checkIfUrlWasSaved(url) {
+    return new Promise(resolve => {
+        chrome.storage.sync.get([SAVED_NODES_KEY], function (data) {
+            const savedNodes = data[SAVED_NODES_KEY] || [];
+            const nodeIds = savedNodes.filter(n => n.url === url).map(n => n.id);
+            console.log(savedNodes, nodeIds);
+            nodeIds.length ? resolve(nodeIds) : resolve(false);
+        })
+    })
+}
+
 
 // Действие при нажатии "сохранить"
 document
     .getElementById('save-button')
     .addEventListener('click', async function () {
-        if (state.where === null) return alert('Выберите узел');
+        if (state.where === null || state.url === null) return alert('Выберите узел');
 
-        chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
-            const currentTab = tabs[0];
+        const response = await savePage(
+            state.url,
+            state.where.mapId,
+            state.where.nodeId,
+            state.name,
+            state.description
+        );
 
-            const response = await savePage(
-                currentTab.url,
-                state.where.mapId,
-                state.where.nodeId,
-                state.name,
-                state.description
-            );
-
-            alert(response.status); // todo notifications
-            window.close();
-        });
+        alert(response.status); // todo notifications
+        window.close();
 });
-
 
 
 // Инициализация popup
 (async function () {
-    // Получение имени страницы
-    chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+    function updateLinkToSelectedNode (node) {
+        const a = document.getElementById('node-link');
+        a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
+    }
+
+    // Получение имени страницы, url. Проверка был ли уже сохранена
+    chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
         const currentTab = tabs[0];
 
+        state.url = currentTab.url;
         state.name = currentTab.title || currentTab.url;
+
+        const nodeIds = await checkIfUrlWasSaved(state.url);
+        if (nodeIds) {
+            // todo проверить, что узлы сейчас существуют и содержат этот url
+            // todo где именно?
+            document.getElementById('url-was-saved').innerText = `Эта страница уже была сохранена (${nodeIds.length} раз(а))`;
+        }
         document.getElementById('page-name').innerText = state.name
 
     });
@@ -84,14 +122,18 @@ document
     for (let node of favoriteNodes) {
         const option = select.appendChild(document.createElement('option'));
         option.value = node.id;
-        option.innerText = node.title;
+        option.innerText = `${node.map.name} / ${node.title}`;
     }
+    updateLinkToSelectedNode(favoriteNodes[0]);
 
     // Слежение за выбором узла
     select.addEventListener('change', event => {
-        const nodeId = event.target.value;
-        const mapId = favoriteNodes.find(n => n.id === nodeId).map.id;
+        const favoriteNode = favoriteNodes.find(n => n.id === event.target.value);
+        const nodeId = favoriteNode.id;
+        const mapId = favoriteNode.map.id;
         state.where = {nodeId, mapId};
+
+        updateLinkToSelectedNode(favoriteNode)
     });
 
     // Слежение за описанием

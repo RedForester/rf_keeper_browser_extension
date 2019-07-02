@@ -24,6 +24,13 @@
             margin-bottom: 1em;
         }
 
+        .favorite-nodes-wrapper {
+            display: flex;
+        }
+        #favorite-nodes {
+            flex: 1;
+            margin-right: 0.5em;
+        }
         #favorite-nodes select {
             width: 100%;
             height: 28px;
@@ -50,9 +57,22 @@
         </div>
 
         <div>
-            <div class="mb">Сохранить в:</div>
+            <div class="mb">Сохранить в (один из любимых узлов):</div>
 
-            <div id="favorite-nodes"></div>
+            <div class="favorite-nodes-wrapper">
+                <div id="favorite-nodes"></div>
+                <div>
+                    <a id="node-link" target="_blank">
+                        <button class="button">
+                            Перейти
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div id="url-was-saved"></div>
         </div>
 
         <div class="text-center">
