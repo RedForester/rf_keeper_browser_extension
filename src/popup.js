@@ -1,21 +1,22 @@
-// todo отсутствие авторизации в rf
+// todo rf auth
+
 const RF_URL = 'http://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 
 const state = {
-    url: null, // url текущей вкладки
+    url: null, // Current page url
     where: null, // nodeId + mapId
-    name: '', // Имя страницы
-    description: '' // Описание страницы
+    name: '', // Page name
+    description: '' // Page description
 };
 
 /**
- * Сохранение страницы в виде узла в RF
- * @param url - Адрес страницы
- * @param mapId - id карты, куда сохранять
- * @param parentId - id узла, куда сохранять
- * @param name - Имя страницы
- * @param description - Описание страницы
+ * Save web page as RedForester node
+ * @param url
+ * @param mapId - id of target map
+ * @param parentId - id of target node
+ * @param name - page name
+ * @param description - explicit description
  * @returns {Promise<Response>}
  */
 async function savePage(url, mapId, parentId, name, description) {
@@ -53,8 +54,8 @@ async function savePage(url, mapId, parentId, name, description) {
 
 
 /**
- * Проверка в каких узлах, сохранен текущий url
- * @param url - Адрес страницы
+ * Check if user did saved url already
+ * @param url
  * @returns {Promise<boolean|Array<string>>}
  */
 async function checkIfUrlWasSaved(url) {
@@ -69,11 +70,11 @@ async function checkIfUrlWasSaved(url) {
 }
 
 
-// Действие при нажатии "сохранить"
+// "Save" action
 document
     .getElementById('save-button')
     .addEventListener('click', async function () {
-        if (state.where === null || state.url === null) return alert('Выберите узел');
+        if (state.where === null || state.url === null) return alert('Select the node');
 
         const response = await savePage(
             state.url,
@@ -86,26 +87,27 @@ document
         const notifyOptions = {
             type: 'basic',
             title: 'RedForester',
-            message: 'Узел создан',
-            iconUrl: '/icons/icon_15.png'
+            message: 'Success',
+            iconUrl: '/icons/icon16.png'
         };
 
         if (!response.ok) {
-            notifyOptions.message = `Не получилось создать узел :(\n${response.status}`;
+            notifyOptions.message = `Can not create the node :(\n${response.status}`;
         }
 
         chrome.notifications.create('main', notifyOptions, () => window.close());
 });
 
 
-// Инициализация popup
+// popup initialization
 (async function () {
     function updateLinkToSelectedNode (node) {
         const a = document.getElementById('node-link');
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
 
-    // Получение имени страницы, url. Проверка был ли уже сохранена
+    // Getting current page info: url, name
+    // Check if url was saved
     chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
         const currentTab = tabs[0];
 
@@ -114,15 +116,15 @@ document
 
         const nodeIds = await checkIfUrlWasSaved(state.url);
         if (nodeIds) {
-            // todo проверить, что узлы сейчас существуют и содержат этот url
-            // todo где именно?
-            document.getElementById('url-was-saved').innerText = `Эта страница уже была сохранена (${nodeIds.length} раз(а))`;
+            // todo check if nodes are existing
+            // todo node links
+            document.getElementById('url-was-saved').innerText = `This page was saved ${nodeIds.length} times`;
         }
         document.getElementById('page-name').innerText = state.name
 
     });
 
-    // Создание и заполнение выбиралки узлов
+    // Select box initialization
     const favoriteNodesWrapper = document.getElementById('favorite-nodes');
     const select = favoriteNodesWrapper.appendChild(document.createElement('select'));
 
@@ -137,7 +139,7 @@ document
     }
     updateLinkToSelectedNode(favoriteNodes[0]);
 
-    // Слежение за выбором узла
+    // Watch for node selection
     select.addEventListener('change', event => {
         const favoriteNode = favoriteNodes.find(n => n.id === event.target.value);
         const nodeId = favoriteNode.id;
@@ -147,7 +149,7 @@ document
         updateLinkToSelectedNode(favoriteNode)
     });
 
-    // Слежение за описанием
+    // Watch for description
     document
         .getElementById('page-description')
         .addEventListener('change', event => state.description = event.target.value)

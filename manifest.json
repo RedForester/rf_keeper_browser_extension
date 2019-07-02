@@ -1,21 +1,19 @@
 {
   "manifest_version": 2,
-  "name": "RedForester extension",
-  "description": "RedForester Extension",
+  "name": "RedForester Keeper Extension",
+  "short_name": "RedForester Keeper",
+  "description": "RedForester extension to save web page quickly",
   "version": "0.0.1",
 
   "icons": {
-    "16": "/icons/icon_15.png"
+    "16": "/icons/icon16.png",
+    "48": "/icons/icon48.png",
+    "128": "/icons/icon128.png"
   },
 
   "permissions": ["activeTab", "storage", "notifications", "http://app.redforester.com/*"],
 
   "browser_action": {
     "default_popup": "/src/popup.html"
-  },
-
-  "background": {
-    "scripts": ["/src/background.js"],
-    "persistent": false
   }
 }
