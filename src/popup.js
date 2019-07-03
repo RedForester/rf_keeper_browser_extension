@@ -119,7 +119,7 @@ document
             type: 'basic',
             title: 'RedForester',
             message: 'Success',
-            iconUrl: '/icons/icon16.png'
+            iconUrl: '/icons/icon128.png'
         };
 
         if (!response.ok) {
