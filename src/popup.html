@@ -38,10 +38,10 @@
             height: 28px;
         }
 
-        .popup-wrapper {
+        #popup-wrapper {
             width: 400px;
         }
-        .popup-wrapper>div {
+        #popup-wrapper>div {
             margin-bottom: 1em;
         }
 
@@ -52,7 +52,7 @@
             flex: 1;
             margin-right: 0.5em;
         }
-        #favorite-nodes select {
+        #favorite-nodes-select {
             width: 100%;
             height: 28px;
         }
@@ -65,7 +65,7 @@
     </style>
 </head>
 <body>
-    <div class="popup-wrapper">
+    <div id="popup-wrapper">
         <div>
             <div class="mb">Page title:</div>
             <div id="page-name"></div>
@@ -89,12 +89,12 @@
             <div class="mb">Save to (one of favorite nodes):</div>
 
             <div class="favorite-nodes-wrapper">
-                <div id="favorite-nodes"></div>
+                <div id="favorite-nodes">
+                    <select id="favorite-nodes-select"></select>
+                </div>
                 <div>
                     <a id="node-link" target="_blank">
-                        <button class="button">
-                            Go
-                        </button>
+                        <button class="button">Go</button>
                     </a>
                 </div>
             </div>

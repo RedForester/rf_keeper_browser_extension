@@ -1,17 +1,6 @@
-// todo rf auth
-
 const RF_URL = 'http://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
-
-const state = {
-    url: null, // Current page url
-    where: null, // nodeId + mapId
-    name: '', // Page name
-    description: '', // Page description
-    preview: null, // Page preview url
-    usePreview: true, // Add preview to node title?
-};
 
 /**
  * Save web page as RedForester node
@@ -71,7 +60,6 @@ async function checkIfUrlWasSaved(url) {
         chrome.storage.sync.get([SAVED_NODES_KEY], function (data) {
             const savedNodes = data[SAVED_NODES_KEY] || [];
             const nodeIds = savedNodes.filter(n => n.url === url).map(n => n.id);
-            console.log(savedNodes, nodeIds);
             nodeIds.length ? resolve(nodeIds) : resolve(false);
         })
     })
@@ -100,35 +88,10 @@ function putUsePreview(value) {
 }
 
 
-// "Save" action
-document
-    .getElementById('save-button')
-    .addEventListener('click', async function () {
-        if (state.where === null || state.url === null) return alert('Select the node');
-
-        const response = await savePage(
-            state.url,
-            state.where.mapId,
-            state.where.nodeId,
-            state.name,
-            state.description,
-            state.usePreview && state.preview,
-        );
-
-        const notifyOptions = {
-            type: 'basic',
-            title: 'RedForester',
-            message: 'Success',
-            iconUrl: '/icons/icon128.png'
-        };
-
-        if (!response.ok) {
-            notifyOptions.message = `Can not create the node :(\n${response.status}`;
-        }
-
-        chrome.notifications.create('main', notifyOptions, () => window.close());
-    });
-
+/**
+ * Code injected to tab dom to fetch image preview
+ * @return {string|string | DocumentFragment}
+ */
 function getPreviewImage() {
     const meta = document.querySelector('meta[property="og:image"]');
     if (meta) return meta.content;
@@ -136,7 +99,16 @@ function getPreviewImage() {
     if (firstImg) return firstImg.src;
 }
 
-async function extractCurrentTabInfo() {
+
+async function getUserInfo() {
+    const response = await fetch(`${RF_URL}/api/user`);
+    if (!response.ok) return null;
+
+    return response.json()
+}
+
+
+async function extractCurrentTabInfo(state) {
     const tabs = await new Promise(resolve => {
         chrome.tabs.query({currentWindow: true, active: true}, resolve);
     });
@@ -188,9 +160,68 @@ async function extractCurrentTabInfo() {
     }
 }
 
-// popup initialization
+
+/**
+ * "Save" button click.
+ * @param state
+ * @return {Promise<void>}
+ */
+async function saveAction (state) {
+    console.log(state);
+
+    if (state.where === null || state.url === null) return alert('Select the node');
+
+    const response = await savePage(
+        state.url,
+        state.where.mapId,
+        state.where.nodeId,
+        state.name,
+        state.description,
+        state.usePreview && state.preview,
+    );
+
+    const notifyOptions = {
+        type: 'basic',
+        title: 'RedForester',
+        message: 'Success',
+        iconUrl: '/icons/icon128.png'
+    };
+
+    if (!response.ok) {
+        notifyOptions.message = `Can not create the node :(\n${response.status}`;
+    }
+
+    chrome.notifications.create('main', notifyOptions, () => window.close());
+}
+
+
+/**
+ * If popup can not fetch user info from RedForester
+ */
+function noAuthAction() {
+    const wrapper = document.getElementById('popup-wrapper');
+
+    wrapper.innerHTML = `
+        <h3>Can not authorize in RedForester service.</h3>
+        Please try to <a href="http://app.redforester.com/login" target="_blank">login</a> first.
+    `;
+}
+
+
+/**
+ * popup initialization
+ */
 (async function () {
-    function updateStateToSelectedNode (node) {
+    const state = {
+        url: null, // Current page url
+        where: null, // nodeId + mapId
+        name: '', // Page name
+        description: '', // Page description
+        preview: null, // Page preview url
+        usePreview: true, // Add preview to node title?
+    };
+
+    function updateStateToSelectedNode (state, node) {
         const nodeId = node.id;
         const mapId = node.map.id;
         state.where = {nodeId, mapId};
@@ -199,28 +230,33 @@ async function extractCurrentTabInfo() {
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
 
+    extractCurrentTabInfo(state);
 
-    extractCurrentTabInfo();
+    const userInfo = await getUserInfo();
+    if (!userInfo) return noAuthAction();
+
+    // todo hide loading spinner
 
     // Select box initialization
-    const favoriteNodesWrapper = document.getElementById('favorite-nodes');
-    const select = favoriteNodesWrapper.appendChild(document.createElement('select'));
-
-    const userInfo = await (await fetch(`${RF_URL}/api/user`)).json();
     const favoriteNodeTag = userInfo.tags[0]; // fixme, rf
     const favoriteNodes = await (await fetch(`${RF_URL}/api/tags/${favoriteNodeTag.id}`)).json();
-
+    const select = document.getElementById('favorite-nodes-select');
     for (let node of favoriteNodes) {
         const option = select.appendChild(document.createElement('option'));
         option.value = node.id;
         option.innerText = `${node.map.name} / ${node.title}`;
     }
-    updateStateToSelectedNode(favoriteNodes[0]);
+    updateStateToSelectedNode(state, favoriteNodes[0]); // todo synced sort
+
+    // "Save" action
+    document
+        .getElementById('save-button')
+        .addEventListener('click', async () => saveAction(state));
 
     // Watch for node selection
     select.addEventListener('change', event => {
         const favoriteNode = favoriteNodes.find(n => n.id === event.target.value);
-        updateStateToSelectedNode(favoriteNode)
+        updateStateToSelectedNode(state, favoriteNode)
     });
 
     // Watch for description
