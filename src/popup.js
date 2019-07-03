@@ -101,7 +101,11 @@ document
 
 // popup initialization
 (async function () {
-    function updateLinkToSelectedNode (node) {
+    function updateStateToSelectedNode (node) {
+        const nodeId = node.id;
+        const mapId = node.map.id;
+        state.where = {nodeId, mapId};
+
         const a = document.getElementById('node-link');
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
@@ -137,16 +141,12 @@ document
         option.value = node.id;
         option.innerText = `${node.map.name} / ${node.title}`;
     }
-    updateLinkToSelectedNode(favoriteNodes[0]);
+    updateStateToSelectedNode(favoriteNodes[0]);
 
     // Watch for node selection
     select.addEventListener('change', event => {
         const favoriteNode = favoriteNodes.find(n => n.id === event.target.value);
-        const nodeId = favoriteNode.id;
-        const mapId = favoriteNode.map.id;
-        state.where = {nodeId, mapId};
-
-        updateLinkToSelectedNode(favoriteNode)
+        updateStateToSelectedNode(favoriteNode)
     });
 
     // Watch for description
