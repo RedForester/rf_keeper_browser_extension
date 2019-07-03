@@ -151,8 +151,10 @@ async function extractCurrentTabInfo(state) {
         const previewImg = document.getElementById('preview-img');
         previewImg.src = preview;
 
-        const previewContainer = document.getElementById('preview-container');
-        previewContainer.style.display = 'block';
+        const previewWrapper = document.getElementById('preview-wrapper');
+        const previewCheckboxWrapper = document.getElementById('preview-checkbox-wrapper');
+        previewCheckboxWrapper.style.display = 'block';
+        previewWrapper.style.display = 'block';
     } else {
         state.preview = null;
         state.usePreview = false;

@@ -10,15 +10,11 @@
         .text-center {
             text-align: center;
         }
-
         .d-flex {
             display: flex;
         }
         .d-none {
             display: none;
-        }
-        .align-items-center {
-            align-items: center;
         }
 
         .button {
@@ -36,10 +32,7 @@
     <style>
         body {
             width: 400px;
-            height: 340px;
-        }
-        body #popup-wrapper {
-            display: none;
+            min-height: 340px;
         }
 
         #loader-wrapper {
@@ -51,6 +44,13 @@
         #popup-wrapper>div {
             margin-bottom: 1em;
         }
+
+        #preview-wrapper {
+            padding-right: 1em;
+            margin-right: 1em;
+            border-right: 2px solid #333;
+        }
+
         #favorite-nodes {
             flex: 1;
             margin-right: 0.5em;
@@ -123,24 +123,28 @@
         <div class="loader"></div>
     </div>
 
-    <div id="popup-wrapper">
-        <div>
-            <div class="mb">Page title:</div>
-            <div id="page-name"></div>
+    <div id="popup-wrapper" class="d-none">
+
+        <div class="d-flex">
+            <div id="preview-wrapper" class="d-none">
+                <img id="preview-img">
+            </div>
+            <div class="page-name-wrapper">
+                <h3 id="page-name"></h3>
+            </div>
+        </div>
+
+        <div id="preview-checkbox-wrapper" class="d-none">
+            <label>
+                <input id="preview-checkbox" type="checkbox">
+                Include preview
+            </label>
         </div>
 
         <div>
             <div class="mb">Description (optional):</div>
 
             <input id="page-description">
-        </div>
-
-        <div id="preview-container" class="d-none">
-            <div class="d-flex align-items-center">
-                <input id="preview-checkbox" type="checkbox">
-                <label for="preview-checkbox">Preview image:</label>
-            </div>
-            <img id="preview-img">
         </div>
 
         <div>
