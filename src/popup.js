@@ -7,7 +7,9 @@ const state = {
     url: null, // Current page url
     where: null, // nodeId + mapId
     name: '', // Page name
-    description: '' // Page description
+    description: '', // Page description
+    preview: null, // Page preview url
+    usePreview: true, // Add preview to node title?
 };
 
 /**
@@ -17,11 +19,16 @@ const state = {
  * @param parentId - id of target node
  * @param name - page name
  * @param description - explicit description
+ * @param preview - preview image url
  * @returns {Promise<Response>}
  */
-async function savePage(url, mapId, parentId, name, description) {
+async function savePage(url, mapId, parentId, name, description, preview) {
     const linkName = description ? `${name} - ${description}`: name;
-    const title = `[${linkName}](${url})`;  // todo escape title
+
+    let title = `[${linkName}](${url})`; // todo escape title
+    if (preview) {
+        title = `![preview](${preview})\n\n${title}`;
+    }
 
     const body = {
         position: ["P", -1],
@@ -81,7 +88,8 @@ document
             state.where.mapId,
             state.where.nodeId,
             state.name,
-            state.description
+            state.description,
+            state.usePreview && state.preview,
         );
 
         const notifyOptions = {
@@ -96,8 +104,60 @@ document
         }
 
         chrome.notifications.create('main', notifyOptions, () => window.close());
-});
+    });
 
+function getPreviewImage() {
+    const meta = document.querySelector('meta[property="og:image"]');
+    if (meta) return meta.content;
+    const firstImg = document.querySelector('img');
+    if (firstImg) return firstImg.src;
+}
+
+async function extractCurrentTabInfo() {
+    const tabs = await new Promise(resolve => {
+        chrome.tabs.query({currentWindow: true, active: true}, resolve);
+    });
+
+    // Getting current page info: url, name
+    // Check if url was saved
+    const currentTab = tabs[0];
+
+    state.url = currentTab.url;
+    state.name = currentTab.title || currentTab.url;
+
+    const nodeIds = await checkIfUrlWasSaved(state.url);
+    if (nodeIds) {
+        // todo check if nodes are existing
+        // todo node links
+        document.getElementById('url-was-saved').innerText = `This page was saved ${nodeIds.length} times`;
+    }
+    document.getElementById('page-name').innerText = state.name;
+
+    // trying to find preview image
+    const [preview] = await new Promise(resolve => {
+        chrome.tabs.executeScript({
+            code: '(' + getPreviewImage + ')();'
+        }, resolve);
+    });
+
+    if (preview) {
+        state.preview = preview;
+        state.usePreview = true;
+
+        const previewCheckbox = document.getElementById('preview-checkbox');
+        previewCheckbox.checked = true;
+        previewCheckbox.onchange = (event) => state.usePreview = event.target.checked;
+
+        const previewImg = document.getElementById('preview-img');
+        previewImg.src = preview;
+
+        const previewContainer = document.getElementById('preview-container');
+        previewContainer.style.display = 'block';
+    } else {
+        state.preview = null;
+        state.usePreview = false;
+    }
+}
 
 // popup initialization
 (async function () {
@@ -110,23 +170,7 @@ document
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
 
-    // Getting current page info: url, name
-    // Check if url was saved
-    chrome.tabs.query({currentWindow: true, active: true}, async function (tabs) {
-        const currentTab = tabs[0];
-
-        state.url = currentTab.url;
-        state.name = currentTab.title || currentTab.url;
-
-        const nodeIds = await checkIfUrlWasSaved(state.url);
-        if (nodeIds) {
-            // todo check if nodes are existing
-            // todo node links
-            document.getElementById('url-was-saved').innerText = `This page was saved ${nodeIds.length} times`;
-        }
-        document.getElementById('page-name').innerText = state.name
-
-    });
+    extractCurrentTabInfo();
 
     // Select box initialization
     const favoriteNodesWrapper = document.getElementById('favorite-nodes');
