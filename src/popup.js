@@ -15,7 +15,7 @@ const USE_PREVIEW_KEY = 'usePreview';
 async function savePage(url, mapId, parentId, name, description, preview) {
     const linkName = description ? `${name} - ${description}`: name;
 
-    let title = `[${linkName}](${url})`; // todo escape title
+    let title = `[${linkName}](${url})`; // todo !!! escape title
     if (preview) {
         title = `![preview](${preview})\n\n${title}`;
     }
@@ -29,7 +29,6 @@ async function savePage(url, mapId, parentId, name, description, preview) {
         })
     };
 
-    // todo try catch, !ok
     const response = await fetch(`${RF_URL}/api/nodes`, {
         method: 'POST',
         headers: {
@@ -233,9 +232,12 @@ function noAuthAction() {
     extractCurrentTabInfo(state);
 
     const userInfo = await getUserInfo();
-    if (!userInfo) return noAuthAction();
 
-    // todo hide loading spinner
+    // Remove loader
+    // todo fade out, window size
+    document.getElementById('loader').remove();
+
+    if (!userInfo) return noAuthAction();
 
     // Select box initialization
     const favoriteNodeTag = userInfo.tags[0]; // fixme, rf
