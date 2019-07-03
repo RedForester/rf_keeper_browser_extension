@@ -193,16 +193,22 @@ async function saveAction (state) {
     chrome.notifications.create('main', notifyOptions, () => window.close());
 }
 
+function removeLoader() {
+    document.getElementById('loader-wrapper').style.display = 'none';
+    document.getElementById('popup-wrapper').style.display = 'initial';
+}
 
 /**
  * If popup can not fetch user info from RedForester
  */
 function noAuthAction() {
-    const wrapper = document.getElementById('popup-wrapper');
+    const wrapper = document.getElementById('loader-wrapper');
 
     wrapper.innerHTML = `
-        <h3>Can not authorize in RedForester service.</h3>
-        Please try to <a href="http://app.redforester.com/login" target="_blank">login</a> first.
+        <div style="margin: auto;">
+            <h3>Can not authorize in RedForester service.</h3>
+            <p>Please try to <a href="http://app.redforester.com/login" target="_blank">login</a> first.</p>
+        </div>
     `;
 }
 
@@ -232,21 +238,18 @@ function noAuthAction() {
     extractCurrentTabInfo(state);
 
     const userInfo = await getUserInfo();
-
-    // Remove loader
-    // todo fade out, window size
-    document.getElementById('loader').remove();
-
     if (!userInfo) return noAuthAction();
 
+    removeLoader();
+
     // Select box initialization
-    const favoriteNodeTag = userInfo.tags[0]; // fixme, rf
+    const favoriteNodeTag = userInfo.tags[0]; // favorite nodes tag. fixme in rf
     const favoriteNodes = await (await fetch(`${RF_URL}/api/tags/${favoriteNodeTag.id}`)).json();
     const select = document.getElementById('favorite-nodes-select');
     for (let node of favoriteNodes) {
         const option = select.appendChild(document.createElement('option'));
         option.value = node.id;
-        option.innerText = `${node.map.name} / ${node.title}`;
+        option.innerText = `${node.map.name} / ${node.title}`; // todo limit
     }
     updateStateToSelectedNode(state, favoriteNodes[0]); // todo synced sort
 
