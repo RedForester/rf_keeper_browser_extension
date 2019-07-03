@@ -2,6 +2,7 @@
 
 const RF_URL = 'http://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
+const USE_PREVIEW_KEY = 'usePreview';
 
 const state = {
     url: null, // Current page url
@@ -76,6 +77,28 @@ async function checkIfUrlWasSaved(url) {
     })
 }
 
+/**
+ * Get saved usePreview value from storage.
+ * @returns {Promise<boolean>}
+ */
+async function getUsePreview() {
+    return new Promise(resolve => {
+        chrome.storage.sync.get([USE_PREVIEW_KEY], function (data) {
+            const saved = data[USE_PREVIEW_KEY];
+            const usePreview = saved === undefined ? true : saved;
+            resolve(usePreview);
+        });
+    })
+}
+
+/**
+ * Put usePreview value to storage.
+ * @param value {boolean}
+ */
+function putUsePreview(value) {
+    chrome.storage.sync.set({ [USE_PREVIEW_KEY]: value })
+}
+
 
 // "Save" action
 document
@@ -140,13 +163,19 @@ async function extractCurrentTabInfo() {
         }, resolve);
     });
 
+    const savedUsePreview = await getUsePreview();
+
     if (preview) {
         state.preview = preview;
-        state.usePreview = true;
+        state.usePreview = savedUsePreview;
 
         const previewCheckbox = document.getElementById('preview-checkbox');
-        previewCheckbox.checked = true;
-        previewCheckbox.onchange = (event) => state.usePreview = event.target.checked;
+        previewCheckbox.checked = savedUsePreview;
+
+        previewCheckbox.onchange = (event) => {
+            state.usePreview = event.target.checked;
+            putUsePreview(event.target.checked);
+        };
 
         const previewImg = document.getElementById('preview-img');
         previewImg.src = preview;
@@ -169,6 +198,7 @@ async function extractCurrentTabInfo() {
         const a = document.getElementById('node-link');
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
+
 
     extractCurrentTabInfo();
 
