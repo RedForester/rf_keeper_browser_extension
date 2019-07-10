@@ -1,3 +1,7 @@
+// todo fix checkbox css
+// todo nice css
+// todo synced sort of favorite nodes
+
 const RF_URL = 'http://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
@@ -128,10 +132,9 @@ async function extractCurrentTabInfo(state) {
     const nodeIds = await checkIfUrlWasSaved(state.url);
     if (nodeIds) {
         // todo check if nodes are existing
-        // todo node links
         document.getElementById('url-was-saved').innerText = `This page was saved ${nodeIds.length} times`;
     }
-    document.getElementById('page-name').innerText = state.name;
+    document.getElementById('page-name').value = state.name;
 
     // trying to find preview image
     const [preview] = await new Promise(resolve => {
@@ -272,6 +275,11 @@ function noAuthAction() {
         const favoriteNode = favoriteNodes.find(n => n.id === event.target.value);
         updateStateToSelectedNode(state, favoriteNode)
     });
+
+    // Watch for page name
+    document
+        .getElementById('page-name')
+        .addEventListener('change', event => state.name = event.target.value);
 
     // Watch for description
     document
