@@ -2,6 +2,12 @@ const RF_URL = 'http://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
 
+const limitString = (str, length=50) => {
+    let text = str.slice(0, length);
+    if (text.length === length) text += '...';
+    return text
+};
+
 /**
  * Save web page as RedForester node
  * @param url
@@ -252,7 +258,7 @@ function noAuthAction() {
     for (let node of favoriteNodes) {
         const option = select.appendChild(document.createElement('option'));
         option.value = node.id;
-        option.innerText = `${node.map.name} / ${node.title}`; // todo limit
+        option.innerText = `${node.map.name} / ${limitString(node.title)}`;
     }
     updateStateToSelectedNode(state, favoriteNodes[0]); // todo synced sort
 
