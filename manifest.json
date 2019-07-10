@@ -3,7 +3,7 @@
   "name": "RedForester Keeper Extension",
   "short_name": "RedForester Keeper",
   "description": "RedForester extension to save web page quickly",
-  "version": "0.0.2",
+  "version": "0.0.3",
 
   "icons": {
     "16": "/icons/icon16.png",
