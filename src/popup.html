@@ -16,6 +16,9 @@
         .d-none {
             display: none;
         }
+        .visibility-hidden {
+            visibility: hidden;
+        }
 
         .button {
             outline: none;
@@ -32,13 +35,16 @@
     <style>
         body {
             width: 400px;
-            min-height: 340px;
         }
 
         #loader-wrapper {
-            height: 100%;
+            position: absolute;
             display: flex;
             align-items: center;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
         }
 
         #popup-wrapper>div {
@@ -119,11 +125,7 @@
     </style>
 </head>
 <body>
-    <div id="loader-wrapper">
-        <div class="loader"></div>
-    </div>
-
-    <div id="popup-wrapper" class="d-none">
+    <div id="popup-wrapper" class="visibility-hidden">
 
         <div class="d-flex">
             <div id="preview-wrapper" class="d-none">
@@ -172,6 +174,10 @@
                 Save
             </button>
         </div>
+    </div>
+
+    <div id="loader-wrapper">
+        <div class="loader"></div>
     </div>
 
     <script src="/src/popup.js"></script>

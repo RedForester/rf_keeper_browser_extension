@@ -195,9 +195,9 @@ async function saveAction (state) {
     chrome.notifications.create('main', notifyOptions, () => window.close());
 }
 
-function removeLoader() {
-    document.getElementById('loader-wrapper').style.display = 'none';
-    document.getElementById('popup-wrapper').style.display = 'initial';
+function toggleLoader() {
+    document.getElementById('loader-wrapper').classList.toggle('visibility-hidden');
+    document.getElementById('popup-wrapper').classList.toggle('visibility-hidden');
 }
 
 /**
@@ -237,12 +237,13 @@ function noAuthAction() {
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
 
-    extractCurrentTabInfo(state);
-
-    const userInfo = await getUserInfo();
+    const [, userInfo] = await Promise.all([
+        extractCurrentTabInfo(state),
+        getUserInfo()
+    ]);
     if (!userInfo) return noAuthAction();
 
-    removeLoader();
+    toggleLoader();
 
     // Select box initialization
     const favoriteNodeTag = userInfo.tags[0]; // favorite nodes tag. fixme in rf
