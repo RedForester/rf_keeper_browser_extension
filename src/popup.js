@@ -2,7 +2,7 @@
 // todo nice css
 // todo synced sort of favorite nodes
 
-const RF_URL = 'http://app.redforester.com';
+const RF_URL = 'https://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
 
@@ -218,7 +218,7 @@ function noAuthAction() {
     wrapper.innerHTML = `
         <div style="margin: auto;">
             <h3>Can not authorize in RedForester service.</h3>
-            <p>Please try to <a href="http://app.redforester.com/login" target="_blank">login</a> first.</p>
+            <p>Please try to <a href="https://app.redforester.com/login" target="_blank">login</a> first.</p>
         </div>
     `;
 }
