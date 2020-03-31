@@ -6,6 +6,8 @@ const RF_URL = 'https://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
 
+const systemPageRe = new RegExp(/^(chrome(-extension)?(-search)?|about|moz-extension):.*$/);
+
 const limitString = (str, length=50) => {
     let text = str.slice(0, length);
     if (text.length === length) text += '...';
@@ -126,6 +128,12 @@ async function extractCurrentTabInfo(state) {
     // Check if url was saved
     const currentTab = tabs[0];
 
+    // Check if this page is available to access
+    const test = currentTab.url.match(systemPageRe);
+    if (test && test[1]) {
+        return false;
+    }
+
     state.url = currentTab.url;
     state.name = currentTab.title || currentTab.url;
 
@@ -168,6 +176,8 @@ async function extractCurrentTabInfo(state) {
         state.preview = null;
         state.usePreview = false;
     }
+
+    return true
 }
 
 
@@ -209,9 +219,6 @@ function toggleLoader() {
     document.getElementById('popup-wrapper').classList.toggle('visibility-hidden');
 }
 
-/**
- * If popup can not fetch user info from RedForester
- */
 function noAuthAction() {
     const wrapper = document.getElementById('loader-wrapper');
 
@@ -219,6 +226,17 @@ function noAuthAction() {
         <div style="margin: auto;">
             <h3>Can not authorize in RedForester service.</h3>
             <p>Please try to <a href="https://app.redforester.com/login" target="_blank">login</a> first.</p>
+        </div>
+    `;
+}
+
+function nopeAction() {
+    const wrapper = document.getElementById('loader-wrapper');
+
+    wrapper.innerHTML = `
+        <div style="margin: auto;">
+            <h3>This is unavailable page.</h3>
+            <p>This plugin can not access this tab</p>
         </div>
     `;
 }
@@ -246,10 +264,11 @@ function noAuthAction() {
         a.href = `${RF_URL}/#mindmap?mapid=${node.map.id}&nodeid=${node.id}`;
     }
 
-    const [, userInfo] = await Promise.all([
+    const [allowedPage, userInfo] = await Promise.all([
         extractCurrentTabInfo(state),
         getUserInfo()
     ]);
+    if (!allowedPage) return nopeAction();
     if (!userInfo) return noAuthAction();
 
     toggleLoader();
