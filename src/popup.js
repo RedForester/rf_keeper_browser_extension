@@ -225,7 +225,7 @@ function noAuthAction() {
     wrapper.innerHTML = `
         <div style="margin: auto;">
             <h3>Can not authorize in RedForester service.</h3>
-            <p>Please try to <a href="https://app.redforester.com/login" target="_blank">login</a> first.</p>
+            <p>Please try to <a href="${RF_URL}/login" target="_blank">login</a> first.</p>
         </div>
     `;
 }
