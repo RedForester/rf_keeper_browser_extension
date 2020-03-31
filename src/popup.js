@@ -278,6 +278,9 @@ function nopeAction() {
     const favoriteNodes = await (await fetch(`${RF_URL}/api/tags/${favoriteNodeTag.id}`)).json();
     const select = document.getElementById('favorite-nodes-select');
     for (let node of favoriteNodes) {
+        // We have no access to this favorite node
+        if (node.title === null) continue;
+
         const option = select.appendChild(document.createElement('option'));
         option.value = node.id;
         option.innerText = `${node.map.name} / ${limitString(node.title)}`;
