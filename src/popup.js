@@ -121,7 +121,6 @@ async function getUserInfo() {
     return response.json()
 }
 
-
 async function extractCurrentTabInfo(state) {
     const tabs = await new Promise(resolve => {
         chrome.tabs.query({currentWindow: true, active: true}, resolve);
@@ -148,11 +147,16 @@ async function extractCurrentTabInfo(state) {
     document.getElementById('page-name').value = state.name;
 
     // trying to find preview image
-    const [preview] = await new Promise(resolve => {
-        chrome.tabs.executeScript({
-            code: '(' + getPreviewImage + ')();'
-        }, resolve);
-    });
+    let preview = null;
+    try {
+        [preview] = await new Promise(resolve => {
+            chrome.tabs.executeScript({
+                code: '(' + getPreviewImage + ')();'
+            }, resolve);
+        });
+    } catch (e) {
+        console.error(e)
+    }
 
     const savedUsePreview = await getUsePreview();
 
