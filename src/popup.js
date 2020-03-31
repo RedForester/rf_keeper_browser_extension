@@ -219,25 +219,27 @@ function toggleLoader() {
     document.getElementById('popup-wrapper').classList.toggle('visibility-hidden');
 }
 
-function noAuthAction() {
+function page(component) {
     const wrapper = document.getElementById('loader-wrapper');
 
     wrapper.innerHTML = `
         <div style="margin: auto;">
-            <h3>Can not authorize in RedForester service.</h3>
-            <p>Please try to <a href="${RF_URL}/login" target="_blank">login</a> first.</p>
+            ${component()}
         </div>
     `;
 }
 
-function nopeAction() {
-    const wrapper = document.getElementById('loader-wrapper');
+function noAuthAction() {
+    return `
+        <h3>Can not authorize in RedForester service.</h3>
+        <p>Please try to <a href="${RF_URL}/login" target="_blank">login</a> first.</p>
+    `;
+}
 
-    wrapper.innerHTML = `
-        <div style="margin: auto;">
-            <h3>This is unavailable page.</h3>
-            <p>This plugin can not access this tab</p>
-        </div>
+function nopeAction() {
+    return `
+        <h3>This is unavailable page.</h3>
+        <p>This plugin can not access this tab</p>
     `;
 }
 
@@ -268,8 +270,8 @@ function nopeAction() {
         extractCurrentTabInfo(state),
         getUserInfo()
     ]);
-    if (!allowedPage) return nopeAction();
-    if (!userInfo) return noAuthAction();
+    if (!allowedPage) return page(nopeAction);
+    if (!userInfo) return page(noAuthAction);
 
     toggleLoader();
 
