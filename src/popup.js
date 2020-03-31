@@ -49,13 +49,16 @@ async function savePage(url, mapId, parentId, name, description, preview) {
         },
         body: JSON.stringify(body)
     });
-    const newNodeInfo = await response.json();
 
-    chrome.storage.sync.get([SAVED_NODES_KEY], function (data) {
-        const savedNodes = data[SAVED_NODES_KEY] || [];
-        savedNodes.push({ id: newNodeInfo.id, url });
-        chrome.storage.sync.set({ [SAVED_NODES_KEY]: savedNodes })
-    });
+    if (response.ok) {
+        const newNodeInfo = await response.json();
+
+        chrome.storage.sync.get([SAVED_NODES_KEY], function (data) {
+            const savedNodes = data[SAVED_NODES_KEY] || [];
+            savedNodes.push({ id: newNodeInfo.id, url });
+            chrome.storage.sync.set({ [SAVED_NODES_KEY]: savedNodes })
+        });
+    }
 
     return response
 }
