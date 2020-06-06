@@ -1,9 +1,10 @@
+// todo text nodes
 // todo fix checkbox css
 // todo nice css
-// todo synced sort of favorite nodes
 
 const RF_URL = 'https://beta.app.redforester.com';
 
+// todo extend keys with userId
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
 const LAST_SAVED_NODE_KEY = 'lastSavedNode';
