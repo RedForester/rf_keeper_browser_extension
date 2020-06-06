@@ -5,6 +5,7 @@
 const RF_URL = 'https://app.redforester.com';
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
+const LAST_SAVED_NODE_KEY = 'lastSavedNode';
 
 const systemPageRe = new RegExp(/^(chrome(-extension)?(-search)?|about|moz-extension):.*$/);
 
@@ -58,6 +59,8 @@ async function savePage(url, mapId, parentId, name, description, preview) {
             savedNodes.push({ id: newNodeInfo.id, url });
             chrome.storage.sync.set({ [SAVED_NODES_KEY]: savedNodes })
         });
+
+        chrome.storage.sync.set({ [LAST_SAVED_NODE_KEY]: parentId })
     }
 
     return response
@@ -265,6 +268,8 @@ function nopeAction() {
     };
 
     function updateStateToSelectedNode (state, node) {
+        if (!node) return;
+
         const nodeId = node.id;
         const mapId = node.map.id;
         state.where = {nodeId, mapId};
@@ -285,16 +290,28 @@ function nopeAction() {
     // Select box initialization
     const favoriteNodeTag = userInfo.tags[0]; // favorite nodes tag. fixme in rf
     const favoriteNodes = await (await fetch(`${RF_URL}/api/tags/${favoriteNodeTag.id}`)).json();
-    const select = document.getElementById('favorite-nodes-select');
-    for (let node of favoriteNodes) {
-        // We have no access to this favorite node
-        if (node.title === null) continue;
 
-        const option = select.appendChild(document.createElement('option'));
-        option.value = node.id;
-        option.innerText = `${node.map.name} / ${limitString(node.title)}`;
-    }
-    updateStateToSelectedNode(state, favoriteNodes[0]); // todo synced sort
+    const select = document.getElementById('favorite-nodes-select');
+
+    // Create options list and select last selected or first
+    chrome.storage.sync.get([LAST_SAVED_NODE_KEY], function (data) {
+        const lastSelectedId = data[LAST_SAVED_NODE_KEY];
+        const lastSelected = favoriteNodes.find(n => n.id === lastSelectedId) || favoriteNodes[0];
+
+        for (let node of favoriteNodes) {
+            // We have no access to this favorite node
+            if (node.title === null) continue;
+
+            const option = select.appendChild(document.createElement('option'));
+            option.value = node.id;
+            option.innerText = `${node.map.name} / ${limitString(node.title)}`;
+            if (lastSelected && lastSelected.id === node.id) {
+                option.selected = true
+            }
+        }
+
+        updateStateToSelectedNode(state, lastSelected);
+    });
 
     // "Save" action
     document
