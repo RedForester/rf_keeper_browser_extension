@@ -2,7 +2,8 @@
 // todo nice css
 // todo synced sort of favorite nodes
 
-const RF_URL = 'https://app.redforester.com';
+const RF_URL = 'https://beta.app.redforester.com';
+
 const SAVED_NODES_KEY = 'savedNodes';
 const USE_PREVIEW_KEY = 'usePreview';
 const LAST_SAVED_NODE_KEY = 'lastSavedNode';
