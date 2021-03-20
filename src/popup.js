@@ -17,6 +17,42 @@ const limitString = (str, length=50) => {
     return text
 };
 
+function extractElementsText(s, maxLineCount = 0) {
+    const span = document.createElement("span");
+    span.innerHTML = s;
+
+    function extractTextFromNodes(element, lines) {
+        const text = [];
+        let nonEmptyLines = 0;
+        for (const c of element.childNodes) {
+            const oldTextLength = text.length;
+            let newTextLength = oldTextLength;
+            if (c.childNodes.length >= 0 && c instanceof Element) {
+                newTextLength = text.push(...extractTextFromNodes(c));
+            } else {
+                if (c.textContent) {
+                    newTextLength = text.push(c.textContent);
+                } else if (c instanceof HTMLElement && c.innerText) {
+                    newTextLength = text.push(c.innerText);
+                }
+            }
+
+            if (oldTextLength === newTextLength) continue;
+            ++ nonEmptyLines;
+            if (lines && nonEmptyLines === lines) break;
+        }
+
+        return text;
+    }
+
+    return extractTextFromNodes(span, maxLineCount);
+}
+
+function extractText(s, maxLineCount) {
+    return extractElementsText(s, maxLineCount).join(" ");
+}
+
+
 /**
  * Save web page as RedForester node
  * @param url
@@ -30,9 +66,10 @@ const limitString = (str, length=50) => {
 async function savePage(url, mapId, parentId, name, description, preview) {
     const linkName = description ? `${name} - ${description}`: name;
 
-    let title = `[${linkName}](${url})`; // todo !!! escape title
+    // todo !!! escape title
+    let title = `<p><a href="${url}" target="_blank">${linkName}</a></p>`
     if (preview) {
-        title = `![preview](${preview})\n\n${title}`;
+        title = `<p><img src="${preview}"></p>${title}`
     }
 
     const body = {
@@ -310,7 +347,7 @@ function nopeAction() {
 
             const option = select.appendChild(document.createElement('option'));
             option.value = node.id;
-            option.innerText = `${node.map.name} / ${limitString(node.title)}`;
+            option.innerText = `${node.map.name} / ${limitString(extractText(node.title, 1))}`;
             if (lastSelected && lastSelected.id === node.id) {
                 option.selected = true
             }
