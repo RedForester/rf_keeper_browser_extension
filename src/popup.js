@@ -123,7 +123,11 @@ async function getUserInfo() {
     const response = await fetch(`${RF_URL}/api/user`);
     if (!response.ok) return null;
 
-    return response.json()
+    const body = await response.json();
+
+    if (body.username === "nobody") return null;
+
+    return body
 }
 
 async function extractCurrentTabInfo(state) {
