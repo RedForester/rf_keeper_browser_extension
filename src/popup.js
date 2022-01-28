@@ -64,13 +64,14 @@ function extractText(s, maxLineCount) {
  * @returns {Promise<Response>}
  */
 async function savePage(url, mapId, parentId, name, description, preview) {
-    const linkName = description ? `${name} - ${description}`: name;
+    // todo escape title html
+    // todo preview size
 
-    // todo !!! escape title
-    let title = `<p><a href="${url}" target="_blank">${linkName}</a></p>`
-    if (preview) {
-        title = `<p><img src="${preview}"></p>${title}`
-    }
+    const title = [
+        preview ? `<p><img src="${preview}"></p>` : "",
+        `<p><a href="${url}" target="_blank">${name}</a></p>`,
+        `<p>${description}</p>`
+    ].join("")
 
     const body = {
         position: ["P", -1],
