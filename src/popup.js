@@ -57,6 +57,10 @@ function clearHtml(html) {
     return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
 }
 
+function clearText(text) {
+    return text.replace(/<[^>]*>?/g, '')
+}
+
 
 /**
  * Save web page as RedForester node
@@ -352,7 +356,7 @@ function nopeAction() {
 
             const option = select.appendChild(document.createElement('option'));
             option.value = node.id;
-            option.innerText = `${node.map.name} / ${limitString(extractText(clearHtml(node.title), 1))}`;
+            option.innerText = `${clearText(node.map.name)} / ${limitString(extractText(clearHtml(node.title), 1))}`;
             if (lastSelected && lastSelected.id === node.id) {
                 option.selected = true
             }
