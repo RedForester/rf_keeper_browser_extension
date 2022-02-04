@@ -53,6 +53,11 @@ function extractText(s, maxLineCount) {
 }
 
 
+function clearHtml(html) {
+    return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
+}
+
+
 /**
  * Save web page as RedForester node
  * @param url
@@ -64,14 +69,13 @@ function extractText(s, maxLineCount) {
  * @returns {Promise<Response>}
  */
 async function savePage(url, mapId, parentId, name, description, preview) {
-    // todo escape title html
     // todo preview size
 
-    const title = [
+    const title = clearHtml([
         preview ? `<p><img src="${preview}"></p>` : "",
         `<p><a href="${url}" target="_blank">${name}</a></p>`,
         `<p>${description}</p>`
-    ].join("")
+    ].join(""));
 
     const body = {
         position: ["P", -1],
@@ -348,7 +352,7 @@ function nopeAction() {
 
             const option = select.appendChild(document.createElement('option'));
             option.value = node.id;
-            option.innerText = `${node.map.name} / ${limitString(extractText(node.title, 1))}`;
+            option.innerText = `${node.map.name} / ${limitString(extractText(clearHtml(node.title), 1))}`;
             if (lastSelected && lastSelected.id === node.id) {
                 option.selected = true
             }
